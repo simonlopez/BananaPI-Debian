@@ -9,12 +9,27 @@
 
 download_host_packages (){
 #--------------------------------------------------------------------------------------------------------------------------------
-# Download packages for host - Ubuntu 14.04 recommended                     
+# Download packages for host - Debian wheezy recommended                     
 #--------------------------------------------------------------------------------------------------------------------------------
+grep -R "emdebian" /etc/apt/ > /dev/null 2> /dev/null
+  if [ $? -ne 0 ]
+  then
+    cat <<EOT > /etc/apt/sources.list.d/emdebian.list
+# Emdebian repository to allow ARM cross compilation
+deb http://ftp.uk.debian.org/emdebian/toolchains/ wheezy main
+deb http://ftp.uk.debian.org/emdebian/toolchains/ sid main
+EOT
+  apt-get update
+  apt-get install -y emdebian-archive-keyring
+fi
 apt-get -y -qq install debconf-utils
 debconf-apt-progress -- apt-get -y install pv bc lzop zip binfmt-support bison build-essential ccache debootstrap flex gawk 
-debconf-apt-progress -- apt-get -y install gcc-arm-linux-gnueabihf lvm2 qemu-user-static u-boot-tools uuid-dev zlib1g-dev unzip 
-debconf-apt-progress -- apt-get -y install libusb-1.0-0-dev parted pkg-config expect gcc-arm-linux-gnueabi libncurses5-dev
+debconf-apt-progress -- apt-get -y install gcc-4.7-arm-linux-gnueabihf lvm2 qemu-user-static u-boot-tools uuid-dev zlib1g-dev unzip 
+debconf-apt-progress -- apt-get -y install libusb-1.0-0-dev parted pkg-config expect libncurses5-dev
+if [ -e /usr/bin/arm-linux-gnueabihf-gcc ]
+then
+  ln -s /usr/bin/arm-linux-gnueabihf-gcc-4.7 /usr/bin/arm-linux-gnueabihf-gcc
+fi
 }
 
 
@@ -63,25 +78,25 @@ if [[ $BRANCH == "next" ]] ; then
 		git checkout $KERNELTAG
 	fi
 	# install device tree blobs in separate package, link zImage to kernel image script
-	if [ "$(patch --dry-run -t -p1 < $SRC/lib/patch/packaging-next.patch | grep previ)" == "" ]; then
-        patch -p1 < $SRC/lib/patch/packaging-next.patch
+	if [ "$(patch --dry-run -t -p1 < $SRC/patch/packaging-next.patch | grep previ)" == "" ]; then
+        patch -p1 < $SRC/patch/packaging-next.patch
     fi
 	# add bananapro DTS
-	if [ "$(patch --dry-run -t -p1 < $SRC/lib/patch/add-banana-pro-dts.patch | grep exists)" == "" ]; then
-        patch -p1 < $SRC/lib/patch/add-banana-pro-dts.patch
+	if [ "$(patch --dry-run -t -p1 < $SRC/patch/add-banana-pro-dts.patch | grep exists)" == "" ]; then
+        patch -p1 < $SRC/patch/add-banana-pro-dts.patch
     fi
 	# add bananar1 DTS
-	if [ "$(patch --dry-run -t -p1 < $SRC/lib/patch/add-banana-r1-dts.patch | grep exists)" == "" ]; then
-        patch -p1 < $SRC/lib/patch/add-banana-r1-dts.patch
+	if [ "$(patch --dry-run -t -p1 < $SRC/patch/add-banana-r1-dts.patch | grep exists)" == "" ]; then
+        patch -p1 < $SRC/patch/add-banana-r1-dts.patch
     fi
 	# add r1 switch driver
-	if [ "$(patch --dry-run -t -p1 < $SRC/lib/patch/bananapi-r1-next.patch | grep previ)" == "" ]; then
-        patch -p1 < $SRC/lib/patch/bananapi-r1-next.patch
+	if [ "$(patch --dry-run -t -p1 < $SRC/patch/bananapi-r1-next.patch | grep previ)" == "" ]; then
+        patch -p1 < $SRC/patch/bananapi-r1-next.patch
     fi
 	if [[ $BOARD == udoo* ]] ; then
 	# fix DTS tree
-	if [ "$(patch --dry-run -t -p1 < $SRC/lib/patch/udoo-dts-fix.patch | grep previ)" == "" ]; then
-        patch -p1 < $SRC/lib/patch/udoo-dts-fix.patch
+	if [ "$(patch --dry-run -t -p1 < $SRC/patch/udoo-dts-fix.patch | grep previ)" == "" ]; then
+        patch -p1 < $SRC/patch/udoo-dts-fix.patch
     fi	
 	fi
 fi
@@ -91,40 +106,40 @@ if [[ $LINUXSOURCE == "linux-sunxi" ]] ; then
 	# if the source is already patched for banana, do reverse GMAC patch
 	if [ "$(cat arch/arm/kernel/setup.c | grep BANANAPI)" != "" ]; then
 		echo "Reversing Banana patch"
-		patch --batch -t -p1 < $SRC/lib/patch/bananagmac.patch
+		patch --batch -t -p1 < $SRC/patch/bananagmac.patch
 	fi
 	# deb packaging patch
-	if [ "$(patch --dry-run -t -p1 < $SRC/lib/patch/packaging.patch | grep previ)" == "" ]; then
-		patch --batch -f -p1 < $SRC/lib/patch/packaging.patch
+	if [ "$(patch --dry-run -t -p1 < $SRC/patch/packaging.patch | grep previ)" == "" ]; then
+		patch --batch -f -p1 < $SRC/patch/packaging.patch
     fi	
 	# gpio patch
-		if [ "$(patch --dry-run -t -p1 < $SRC/lib/patch/gpio.patch | grep previ)" == "" ]; then
-			patch --batch -f -p1 < $SRC/lib/patch/gpio.patch
+		if [ "$(patch --dry-run -t -p1 < $SRC/patch/gpio.patch | grep previ)" == "" ]; then
+			patch --batch -f -p1 < $SRC/patch/gpio.patch
 	    fi
 	# Temperature reading from A20 chip
-		if [ "$(patch --dry-run -t -p1 < $SRC/lib/patch/a20-temp.patch | grep previ)" == "" ]; then
-			patch --batch -f -p1 < $SRC/lib/patch/a20-temp.patch
+		if [ "$(patch --dry-run -t -p1 < $SRC/patch/a20-temp.patch | grep previ)" == "" ]; then
+			patch --batch -f -p1 < $SRC/patch/a20-temp.patch
 	    fi
 	# SPI functionality
-    	if [ "$(patch --dry-run -t -p1 < $SRC/lib/patch/spi.patch | grep previ)" == "" ]; then
-		patch --batch -f -p1 < $SRC/lib/patch/spi.patch
+    	if [ "$(patch --dry-run -t -p1 < $SRC/patch/spi.patch | grep previ)" == "" ]; then
+		patch --batch -f -p1 < $SRC/patch/spi.patch
     	fi
 	# banana/orange gmac, wireless and 5&7" touchscreen driver is a bit different  
 	if [[ $BOARD == "bananapi" || $BOARD == "orangepi" ]] ; then
-        	if [ "$(patch --dry-run -t -p1 < $SRC/lib/patch/bananagmac.patch | grep previ)" == "" ]; then
-        		patch --batch -N -p1 < $SRC/lib/patch/bananagmac.patch
+        	if [ "$(patch --dry-run -t -p1 < $SRC/patch/bananagmac.patch | grep previ)" == "" ]; then
+        		patch --batch -N -p1 < $SRC/patch/bananagmac.patch
         	fi
-			if [ "$(patch --dry-run -t -p1 < $SRC/lib/patch/wireless-bananapro.patch | grep previ)" == "" ]; then
-        		patch --batch -N -p1 < $SRC/lib/patch/wireless-bananapro.patch
+			if [ "$(patch --dry-run -t -p1 < $SRC/patch/wireless-bananapro.patch | grep previ)" == "" ]; then
+        		patch --batch -N -p1 < $SRC/patch/wireless-bananapro.patch
         	fi
-			if [ "$(patch --dry-run -t -p1 < $SRC/lib/patch/banana-ts.patch | grep previ)" == "" ]; then
-        		patch --batch -N -p1 < $SRC/lib/patch/banana-ts.patch
+			if [ "$(patch --dry-run -t -p1 < $SRC/patch/banana-ts.patch | grep previ)" == "" ]; then
+        		patch --batch -N -p1 < $SRC/patch/banana-ts.patch
         	fi
-			if [ "$(patch --dry-run -t -p1 < $SRC/lib/patch/banana-ts-extra.patch | grep previ)" == "" ]; then
-        		patch --batch -N -p1 < $SRC/lib/patch/banana-ts-extra.patch
+			if [ "$(patch --dry-run -t -p1 < $SRC/patch/banana-ts-extra.patch | grep previ)" == "" ]; then
+        		patch --batch -N -p1 < $SRC/patch/banana-ts-extra.patch
         	fi
-			if [ "$(patch --dry-run -t -p1 < $SRC/lib/patch/bananapi-r1.patch | grep previ)" == "" ]; then
-        		patch --batch -N -p1 < $SRC/lib/patch/bananapi-r1.patch
+			if [ "$(patch --dry-run -t -p1 < $SRC/patch/bananapi-r1.patch | grep previ)" == "" ]; then
+        		patch --batch -N -p1 < $SRC/patch/bananapi-r1.patch
         	fi
     fi
     # compile sunxi tools
@@ -134,18 +149,18 @@ fi
 # cubox / hummingboard 3.14
 if [[ $LINUXSOURCE == "linux-cubox" ]] ; then
 	# SPI and I2C functionality
-	if [ "$(patch --dry-run -t -p1 < $SRC/lib/patch/hb-i2c-spi.patch | grep previ)" == "" ]; then
-        patch -p1 < $SRC/lib/patch/hb-i2c-spi.patch
+	if [ "$(patch --dry-run -t -p1 < $SRC/patch/hb-i2c-spi.patch | grep previ)" == "" ]; then
+        patch -p1 < $SRC/patch/hb-i2c-spi.patch
     fi
 	# deb packaging patch
-	if [ "$(patch --dry-run -t -p1 < $SRC/lib/patch/packaging-cubox.patch | grep previ)" == "" ]; then
-		patch --batch -f -p1 < $SRC/lib/patch/packaging-cubox.patch
+	if [ "$(patch --dry-run -t -p1 < $SRC/patch/packaging-cubox.patch | grep previ)" == "" ]; then
+		patch --batch -f -p1 < $SRC/patch/packaging-cubox.patch
     fi	
 fi
 
 # compiler reverse patch. It has already been fixed.
-if [ "$(patch --dry-run -t -p1 < $SRC/lib/patch/compiler.patch | grep Reversed)" != "" ]; then
-	patch --batch -t -p1 < $SRC/lib/patch/compiler.patch
+if [ "$(patch --dry-run -t -p1 < $SRC/patch/compiler.patch | grep Reversed)" != "" ]; then
+	patch --batch -t -p1 < $SRC/patch/compiler.patch
 fi
 
 # u-boot
@@ -153,8 +168,8 @@ cd $DEST/$BOOTSOURCE
 
 if [[ $BOARD == udoo* ]] ; then
 	# This enabled boot script loading from ext2 partition which is my default setup
-	if [ "$(patch --dry-run -t -p1 < $SRC/lib/patch/udoo-uboot-fatboot.patch | grep previ)" == "" ]; then
-       		patch --batch -N -p1 < $SRC/lib/patch/udoo-uboot-fatboot.patch
+	if [ "$(patch --dry-run -t -p1 < $SRC/patch/udoo-uboot-fatboot.patch | grep previ)" == "" ]; then
+       		patch --batch -N -p1 < $SRC/patch/udoo-uboot-fatboot.patch
 	fi
 fi
 }
@@ -232,14 +247,14 @@ else
 fi
 cd $DEST/$LINUXSOURCE
 if [[ $BOARD == "bananapi" || $BOARD == "orangepi" ]]; then
-	if [ "$(patch --dry-run -t -p1 < $SRC/lib/patch/bananafbtft.patch | grep previ)" == "" ]; then
+	if [ "$(patch --dry-run -t -p1 < $SRC/patch/bananafbtft.patch | grep previ)" == "" ]; then
 					# DMA disable
-                	patch --batch -N -p1 < $SRC/lib/patch/bananafbtft.patch
+                	patch --batch -N -p1 < $SRC/patch/bananafbtft.patch
 	fi
 fi
 # common patch
-if [ "$(patch --dry-run -t -p1 < $SRC/lib/patch/small_lcd_drivers.patch | grep previ)" == "" ]; then
-	patch -p1 < $SRC/lib/patch/small_lcd_drivers.patch
+if [ "$(patch --dry-run -t -p1 < $SRC/patch/small_lcd_drivers.patch | grep previ)" == "" ]; then
+	patch -p1 < $SRC/patch/small_lcd_drivers.patch
 fi
 }
 
@@ -259,10 +274,10 @@ cd $DEST/$LINUXSOURCE
 if [ "$KERNEL_CLEAN" = "yes" ]; then make ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- clean ; fi
 
 # adding custom firmware to kernel source
-if [[ -n "$FIRMWARE" ]]; then unzip -o $SRC/lib/$FIRMWARE -d $DEST/$LINUXSOURCE/firmware; fi
+if [[ -n "$FIRMWARE" ]]; then unzip -o $SRC/$FIRMWARE -d $DEST/$LINUXSOURCE/firmware; fi
 
 # use proven config
-cp $SRC/lib/config/$LINUXCONFIG.config $DEST/$LINUXSOURCE/.config
+cp $SRC/config/$LINUXCONFIG.config $DEST/$LINUXSOURCE/.config
 if [ "$KERNEL_CONFIGURE" = "yes" ]; then make $CTHREADS ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- menuconfig ; fi
 
 # this way of compilation is much faster. We can use multi threading here but not later
@@ -270,7 +285,7 @@ make $CTHREADS ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- all zImage
 # make $CTHREADS ARCH=arm CROSS_COMPILE=arm-linux-gnueabihf- 
 # produce deb packages: image, headers, firmware, libc
 make -j1 deb-pkg KDEB_PKGVERSION=$REVISION LOCALVERSION="-"$BOARD KBUILD_DEBARCH=armhf ARCH=arm DEBFULLNAME="$MAINTAINER" DEBEMAIL="$MAINTAINERMAIL" CROSS_COMPILE=arm-linux-gnueabihf- 
-# ALTERNATIVE DEB_HOST_ARCH=armhf make-kpkg --rootcmd fakeroot --arch arm --cross-compile arm-linux-gnueabihf- --revision=$REVISION --append-to-version=-$BOARD --jobs 3 --overlay-dir $SRC/lib/scripts/build-kernel kernel_image 
+# ALTERNATIVE DEB_HOST_ARCH=armhf make-kpkg --rootcmd fakeroot --arch arm --cross-compile arm-linux-gnueabihf- --revision=$REVISION --append-to-version=-$BOARD --jobs 3 --overlay-dir $SRC/scripts/build-kernel kernel_image 
 
 # we need a name
 CHOOSEN_KERNEL=linux-image-"$VER"-"$CONFIG_LOCALVERSION$BOARD"_"$REVISION"_armhf.deb
@@ -286,7 +301,7 @@ CHOOSEN_KERNEL=$VER"-"$CONFIG_LOCALVERSION$BOARD-$BRANCH".tar"
 cd $DEST/$LINUXSOURCE
 if [[ "$FBTFT" = "yes" && $BRANCH != "next" ]]; then
 # reverse fbtft patch
-patch --batch -t -p1 < $SRC/lib/patch/bananafbtft.patch
+patch --batch -t -p1 < $SRC/patch/bananafbtft.patch
 fi
 
 else
@@ -366,7 +381,7 @@ rm 	-f $DEST/output/sdcard/etc/motd
 touch $DEST/output/sdcard/etc/motd
 
 # choose proper apt list
-cp $SRC/lib/config/sources.list.$RELEASE $DEST/output/sdcard/etc/apt/sources.list
+cp $SRC/config/sources.list.$RELEASE $DEST/output/sdcard/etc/apt/sources.list
 
 # update and upgrade
 LC_ALL=C LANGUAGE=C LANG=C chroot $DEST/output/sdcard /bin/bash -c "apt-get -y update"
@@ -383,8 +398,8 @@ LC_ALL=C LANGUAGE=C LANG=C chroot $DEST/output/sdcard /bin/bash -c "update-local
 chroot $DEST/output/sdcard /bin/bash -c "debconf-apt-progress -- apt-get -y install $PAKETKI"
 
 # configure the system for unattended upgrades
-cp $SRC/lib/scripts/50unattended-upgrades $DEST/output/sdcard/etc/apt/apt.conf.d/50unattended-upgrades
-cp $SRC/lib/scripts/02periodic $DEST/output/sdcard/etc/apt/apt.conf.d/02periodic
+cp $SRC/scripts/50unattended-upgrades $DEST/output/sdcard/etc/apt/apt.conf.d/50unattended-upgrades
+cp $SRC/scripts/02periodic $DEST/output/sdcard/etc/apt/apt.conf.d/02periodic
 sed -e "s/CODENAME/$RELEASE/g" -i $DEST/output/sdcard/etc/apt/apt.conf.d/50unattended-upgrades
 
 case $RELEASE in
@@ -407,7 +422,7 @@ wheezy)
 		;;
 jessie)
 		# add serial console
-		cp $SRC/lib/config/ttyS0.conf $DEST/output/sdcard/etc/init/ttyS0.conf
+		cp $SRC/config/ttyS0.conf $DEST/output/sdcard/etc/init/ttyS0.conf
 		# specifics packets add and remove
 		LC_ALL=C LANGUAGE=C LANG=C chroot $DEST/output/sdcard /bin/bash -c "debconf-apt-progress -- apt-get -y install libnl-3-dev busybox-syslogd software-properties-common python-software-properties"
 		LC_ALL=C LANGUAGE=C LANG=C chroot $DEST/output/sdcard /bin/bash -c "apt-get -y remove rsyslog"		
@@ -420,7 +435,7 @@ jessie)
 		;;
 trusty)
 		# add serial console
-		cp $SRC/lib/config/ttyS0.conf $DEST/output/sdcard/etc/init/ttyS0.conf
+		cp $SRC/config/ttyS0.conf $DEST/output/sdcard/etc/init/ttyS0.conf
 		# specifics packets add and remove
 		LC_ALL=C LANGUAGE=C LANG=C chroot $DEST/output/sdcard /bin/bash -c "debconf-apt-progress -- apt-get -y install libnl-3-dev busybox-syslogd software-properties-common python-software-properties"
 		LC_ALL=C LANGUAGE=C LANG=C chroot $DEST/output/sdcard /bin/bash -c "apt-get -y remove rsyslog"		
@@ -458,15 +473,15 @@ APT::Install-Suggests "0";
 END
 
 # scripts for autoresize at first boot
-cp $SRC/lib/scripts/resize2fs $DEST/output/sdcard/etc/init.d
-cp $SRC/lib/scripts/firstrun $DEST/output/sdcard/etc/init.d
+cp $SRC/scripts/resize2fs $DEST/output/sdcard/etc/init.d
+cp $SRC/scripts/firstrun $DEST/output/sdcard/etc/init.d
 chroot $DEST/output/sdcard /bin/bash -c "chmod +x /etc/init.d/firstrun"
 chroot $DEST/output/sdcard /bin/bash -c "chmod +x /etc/init.d/resize2fs"
 chroot $DEST/output/sdcard /bin/bash -c "insserv firstrun >> /dev/null" 
 
 # install custom bashrc and hardware dependent motd
-cat $SRC/lib/scripts/bashrc >> $DEST/output/sdcard/etc/bash.bashrc 
-cp $SRC/lib/scripts/armhwinfo $DEST/output/sdcard/etc/init.d/
+cat $SRC/scripts/bashrc >> $DEST/output/sdcard/etc/bash.bashrc 
+cp $SRC/scripts/armhwinfo $DEST/output/sdcard/etc/init.d/
 chroot $DEST/output/sdcard /bin/bash -c "chmod +x /etc/init.d/armhwinfo"
 chroot $DEST/output/sdcard /bin/bash -c "insserv armhwinfo >> /dev/null" 
 
@@ -477,7 +492,7 @@ fi
 
 # install ramlog
 if [ "$RELEASE" = "wheezy" ]; then
-	cp $SRC/lib/bin/ramlog_2.0.0_all.deb $DEST/output/sdcard/tmp
+	cp $SRC/bin/ramlog_2.0.0_all.deb $DEST/output/sdcard/tmp
 	chroot $DEST/output/sdcard /bin/bash -c "dpkg -i /tmp/ramlog_2.0.0_all.deb"
 	rm $DEST/output/sdcard/tmp/ramlog_2.0.0_all.deb
 	sed -e 's/TMPFS_RAMFS_SIZE=/TMPFS_RAMFS_SIZE=512m/g' -i $DEST/output/sdcard/etc/default/ramlog
@@ -487,12 +502,12 @@ fi
 
 # temper binary for USB temp meter
 cd $DEST/output/sdcard/usr/local/bin
-tar xvfz $SRC/lib/bin/temper.tgz
+tar xvfz $SRC/bin/temper.tgz
 
 # replace hostapd from testing binary
 cd $DEST/output/sdcard/usr/sbin/
-tar xfz $SRC/lib/bin/hostapd24.tgz
-cp $SRC/lib/config/hostapd.conf $DEST/output/sdcard/etc/hostapd.conf
+tar xfz $SRC/bin/hostapd24.tgz
+cp $SRC/config/hostapd.conf $DEST/output/sdcard/etc/hostapd.conf
 
 # set console
 chroot $DEST/output/sdcard /bin/bash -c "export TERM=linux"
@@ -633,7 +648,7 @@ echo "" >> $1
 echo "" >> $1
 echo "--------------------------------------------------------------------------------" >> $1
 echo "" >> $1
-cat $SRC/lib/LICENSE >> $1
+cat $SRC/LICENSE >> $1
 echo "" >> $1
 echo "--------------------------------------------------------------------------------" >> $1 
 }
@@ -685,10 +700,10 @@ elif [[ $BOARD == udoo* ]] ; then
 	dd if=u-boot.imx of=$LOOP bs=1024 seek=1 conv=fsync
 elif [[ $BOARD == "cubieboard4" ]]
 then
-	$SRC/lib/bin/host/cubie-fex2bin $SRC/lib/config/cubieboard4.fex /tmp/sys_config.bin
-	$SRC/lib/bin/host/cubie-uboot-spl $SRC/lib/bin/cb4-u-boot-spl.bin /tmp/sys_config.bin /tmp/u-boot-spl_with_sys_config.bin
+	$SRC/bin/host/cubie-fex2bin $SRC/config/cubieboard4.fex /tmp/sys_config.bin
+	$SRC/bin/host/cubie-uboot-spl $SRC/bin/cb4-u-boot-spl.bin /tmp/sys_config.bin /tmp/u-boot-spl_with_sys_config.bin
 	dd if=/tmp/u-boot-spl_with_sys_config.bin of=$LOOP bs=1024 seek=8 status=noxfer  
-	$SRC/lib/bin/host/cubie-uboot $SRC/lib/bin/cb4-u-boot-sun9iw1p1.bin /tmp/sys_config.bin /tmp/u-boot-sun9iw1p1_with_sys_config.bin
+	$SRC/bin/host/cubie-uboot $SRC/bin/cb4-u-boot-sun9iw1p1.bin /tmp/sys_config.bin /tmp/u-boot-sun9iw1p1_with_sys_config.bin
 	dd if=/tmp/u-boot-sun9iw1p1_with_sys_config.bin of=$LOOP bs=1024 seek=19096 status=noxfer
 else
 	dd if=u-boot-sunxi-with-spl.bin of=$LOOP bs=1024 seek=8 status=noxfer
@@ -701,7 +716,7 @@ sleep 2
 mv $DEST/output/debian_rootfs.raw $DEST/output/$VERSION.raw
 sync
 cd $DEST/output/
-cp $SRC/lib/bin/imagewriter.exe .
+cp $SRC/bin/imagewriter.exe .
 # sign with PGP
 if [[ $GPGPASS != "" ]] ; then
 	echo $GPGPASS | gpg --passphrase-fd 0 --armor --detach-sign --batch --yes $VERSION.raw	

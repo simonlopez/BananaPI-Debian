@@ -40,7 +40,7 @@ MISC2_DIR=""
 
 if [[ $BRANCH == *next* ]];then
 	# All next compilations are using mainline u-boot & kernel
-	LINUXKERNEL="git://git.kernel.org/pub/scm/linux/kernel/git/stable/linux-stable.git"
+	LINUXKERNEL="https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux-stable.git"
 	LINUXSOURCE="linux-mainline"
 	LINUXCONFIG="linux-sunxi-next"
 	FIRMWARE=""

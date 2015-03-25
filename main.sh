@@ -90,9 +90,9 @@ HOST="$BOARD"
 #--------------------------------------------------------------------------------------------------------------------------------
 # Load libraries
 #--------------------------------------------------------------------------------------------------------------------------------
-source $SRC/lib/configuration.sh			# Board configuration
-source $SRC/lib/boards.sh 					# Board specific install
-source $SRC/lib/common.sh 					# Functions 
+source $SRC/configuration.sh			# Board configuration
+source $SRC/boards.sh 					# Board specific install
+source $SRC/common.sh 					# Functions 
 
 
 #--------------------------------------------------------------------------------------------------------------------------------

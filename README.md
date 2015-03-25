@@ -37,8 +37,8 @@ SRC=$(pwd)
 DEST=$(pwd)/output                      		      	
 
 # get updates of the main build libraries
-if [ -d "$SRC/lib" ]; then
-	cd $SRC/lib
+if [ -d "$SRC" ]; then
+	cd $SRC
 	git pull 
 else
 	# download SDK
@@ -46,6 +46,6 @@ else
 	git clone https://github.com/igorpecovnik/lib
 fi
 
-source $SRC/lib/main.sh
+source $SRC/main.sh
 #---------------------------------------------------------------------------------------
 ```

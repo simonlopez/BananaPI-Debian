@@ -56,7 +56,7 @@ if [[ $LINUXCONFIG == *sunxi* ]] ; then
 		
 		# add NAND boot content
 		if [[ $BOARD != "bananapi" ]] ; then
-			cp $SRC/lib/bin/nand1-allwinner.tgz $DEST/output/sdcard/root
+			cp $SRC/bin/nand1-allwinner.tgz $DEST/output/sdcard/root
 		fi
 		
 		# remove some unsupported stuff from mainline
@@ -66,12 +66,12 @@ if [[ $LINUXCONFIG == *sunxi* ]] ; then
 		
 		if [[ $BOARD == "cubietruck" || $BOARD == "cubieboard2"  || $BOARD == bananapi* || $BOARD == "orangepi" ]] ; then
 			# Bananpi router switch config
-			tar xvfz $SRC/lib/bin/swconfig.tgz -C $DEST/output/sdcard/usr/sbin/
+			tar xvfz $SRC/bin/swconfig.tgz -C $DEST/output/sdcard/usr/sbin/
 			# bluetooth device enabler - for cubietruck
-			cp $SRC/lib/bin/brcm_patchram_plus $DEST/output/sdcard/usr/local/bin/brcm_patchram_plus
+			cp $SRC/bin/brcm_patchram_plus $DEST/output/sdcard/usr/local/bin/brcm_patchram_plus
 			chroot $DEST/output/sdcard /bin/bash -c "chmod +x /usr/local/bin/brcm_patchram_plus"
-			cp $SRC/lib/scripts/brcm40183 $DEST/output/sdcard/etc/default
-			cp $SRC/lib/scripts/brcm40183-patch $DEST/output/sdcard/etc/init.d
+			cp $SRC/scripts/brcm40183 $DEST/output/sdcard/etc/default
+			cp $SRC/scripts/brcm40183-patch $DEST/output/sdcard/etc/init.d
 			chroot $DEST/output/sdcard /bin/bash -c "chmod +x /etc/init.d/brcm40183-patch"
 			# default lirc configuration
 			sed -i '1i sed -i \x27s/DEVICE="\\/dev\\/input.*/DEVICE="\\/dev\\/input\\/\x27$str\x27"/g\x27 /etc/lirc/hardware.conf' $DEST/output/sdcard/etc/lirc/hardware.conf
@@ -79,12 +79,12 @@ if [[ $LINUXCONFIG == *sunxi* ]] ; then
 			sed -i '1i # Cubietruck automatic lirc device detection by Igor Pecovnik' $DEST/output/sdcard/etc/lirc/hardware.conf
 			sed -e 's/DEVICE=""/DEVICE="\/dev\/input\/event1"/g' -i $DEST/output/sdcard/etc/lirc/hardware.conf
 			sed -e 's/DRIVER="UNCONFIGURED"/DRIVER="devinput"/g' -i $DEST/output/sdcard/etc/lirc/hardware.conf
-			cp $SRC/lib/config/lirc.conf.cubietruck $DEST/output/sdcard/etc/lirc/lircd.conf
+			cp $SRC/config/lirc.conf.cubietruck $DEST/output/sdcard/etc/lirc/lircd.conf
 		fi # cubieboards
 		if [[ $BOARD == "orangepi" ]] ; then
 			# realtek have special hostapd
-		    tar xvfz $SRC/lib/bin/hostapd24-rtl871xdrv.tgz -C $DEST/output/sdcard/usr/sbin/			
-			cp $SRC/lib/config/hostapd.realtek.conf $DEST/output/sdcard/etc/hostapd.conf
+		    tar xvfz $SRC/bin/hostapd24-rtl871xdrv.tgz -C $DEST/output/sdcard/usr/sbin/			
+			cp $SRC/config/hostapd.realtek.conf $DEST/output/sdcard/etc/hostapd.conf
 		fi # orangepi		
 fi # SUNXI
 
@@ -103,7 +103,7 @@ if [[ $BOARD == cubox-i* ]] ; then
 		if [ -f $DEST/output/sdcard/etc/inittab ]; then sed -e "s/ttyS0/ttymxc0/g" -i $DEST/output/sdcard/etc/inittab; fi
 		if [ -f $DEST/output/sdcard/etc/init/ttyS0.conf ]; then mv $DEST/output/sdcard/etc/init/ttyS0.conf $DEST/output/sdcard/etc/init/ttymxc0.conf; sed -e "s/ttymxc0/ttyS0/g" -i $DEST/output/sdcard/etc/init/ttymxc0.conf; fi	
 		
-		#cp $SRC/lib/config/uEnv.cubox-i $DEST/output/sdcard/boot/uEnv.txt
+		#cp $SRC/config/uEnv.cubox-i $DEST/output/sdcard/boot/uEnv.txt
 		#cp $DEST/$LINUXSOURCE/arch/arm/boot/dts/*.dtb $DEST/output/sdcard/boot
 		#chroot $DEST/output/sdcard /bin/bash -c "chmod 755 /boot/uEnv.txt"
 
@@ -112,19 +112,19 @@ if [[ $BOARD == cubox-i* ]] ; then
 		# default lirc configuration 
 		sed -e 's/DEVICE=""/DEVICE="\/dev\/lirc0"/g' -i $DEST/output/sdcard/etc/lirc/hardware.conf
 		sed -e 's/DRIVER="UNCONFIGURED"/DRIVER="default"/g' -i $DEST/output/sdcard/etc/lirc/hardware.conf
-		cp $SRC/lib/config/lirc.conf.cubox-i $DEST/output/sdcard/etc/lirc/lircd.conf
-		cp $SRC/lib/bin/brcm_patchram_plus_cubox $DEST/output/sdcard/usr/local/bin/brcm_patchram_plus
+		cp $SRC/config/lirc.conf.cubox-i $DEST/output/sdcard/etc/lirc/lircd.conf
+		cp $SRC/bin/brcm_patchram_plus_cubox $DEST/output/sdcard/usr/local/bin/brcm_patchram_plus
 		chroot $DEST/output/sdcard /bin/bash -c "chmod +x /usr/local/bin/brcm_patchram_plus"
-		cp $SRC/lib/scripts/brcm4330 $DEST/output/sdcard/etc/default
-		cp $SRC/lib/scripts/brcm4330-patch $DEST/output/sdcard/etc/init.d
+		cp $SRC/scripts/brcm4330 $DEST/output/sdcard/etc/default
+		cp $SRC/scripts/brcm4330-patch $DEST/output/sdcard/etc/init.d
 		chroot $DEST/output/sdcard /bin/bash -c "chmod +x /etc/init.d/brcm4330-patch"
 		chroot $DEST/output/sdcard /bin/bash -c "insserv brcm4330-patch >> /dev/null" 
 		case $RELEASE in
 		wheezy)
 		echo "deb http://repo.gbps.io/BSP:/Cubox-i/Debian_Wheezy/ ./" >> $DEST/output/sdcard/etc/apt/sources.list
-		cp $SRC/lib/scripts/mxobs $DEST/output/sdcard/etc/apt/preferences.d/mxobs
+		cp $SRC/scripts/mxobs $DEST/output/sdcard/etc/apt/preferences.d/mxobs
 		mkdir $DEST/output/sdcard/etc/X11/
-		cp $SRC/lib/config/xorg.conf.cubox $DEST/output/sdcard/etc/X11/xorg.conf
+		cp $SRC/config/xorg.conf.cubox $DEST/output/sdcard/etc/X11/xorg.conf
 		chroot $DEST/output/sdcard /bin/bash -c "wget -qO - http://repo.gbps.io/BSP:/Cubox-i:/devel/Debian_Wheezy/Release.key | apt-key add -"
 		;;
 		jessie)
@@ -175,11 +175,11 @@ else
 for word in $MODULES; do echo $word >> $DEST/output/sdcard/etc/modules; done
 fi
 # script to install to SATA
-cp $SRC/lib/scripts/nand-sata-install.sh $DEST/output/sdcard/root
+cp $SRC/scripts/nand-sata-install.sh $DEST/output/sdcard/root
 chroot $DEST/output/sdcard /bin/bash -c "chmod +x /root/nand-sata-install.sh"
 
 # copy and create symlink to default interfaces configuration
-cp $SRC/lib/config/interfaces.* $DEST/output/sdcard/etc/network/
+cp $SRC/config/interfaces.* $DEST/output/sdcard/etc/network/
 ln -sf interfaces.default $DEST/output/sdcard/etc/network/interfaces
 
 # install kernel
@@ -204,11 +204,11 @@ if [[ $BRANCH == *next* || $BOARD == cubox-i* ]];then
 		rm -rf $DEST/output/sdcard/boot/dtb.old
 		# copy boot script and change it acordingly
 		if [[ $BOARD == udoo* ]] ; then		
-			cp $SRC/lib/config/boot-udoo-next.cmd $DEST/output/sdcard/boot/boot-next.cmd
+			cp $SRC/config/boot-udoo-next.cmd $DEST/output/sdcard/boot/boot-next.cmd
 		elif [[ $BOARD == cubox-i* ]]; then
-			cp $SRC/lib/config/boot-cubox.cmd $DEST/output/sdcard/boot/boot-next.cmd
+			cp $SRC/config/boot-cubox.cmd $DEST/output/sdcard/boot/boot-next.cmd
 		else
-			cp $SRC/lib/config/boot-next.cmd $DEST/output/sdcard/boot/boot-next.cmd
+			cp $SRC/config/boot-next.cmd $DEST/output/sdcard/boot/boot-next.cmd
 		fi		
 		#sed -e "s/zImage/vmlinuz-$CHOOSEN_KERNEL/g" -i $DEST/output/sdcard/boot/boot-next.cmd
 		#chroot $DEST/output/sdcard /bin/bash -c "ln -s /boot/vmlinuz-$CHOOSEN_KERNEL /boot/zImage"
@@ -216,12 +216,12 @@ if [[ $BRANCH == *next* || $BOARD == cubox-i* ]];then
 		# compile boot script
 		mkimage -C none -A arm -T script -d $DEST/output/sdcard/boot/boot-next.cmd $DEST/output/sdcard/boot/boot.scr >> /dev/null
 	elif [[ $LINUXCONFIG == *sunxi* ]]; then
-		fex2bin $SRC/lib/config/$BOARD.fex $DEST/output/sdcard/boot/$BOARD.bin
+		fex2bin $SRC/config/$BOARD.fex $DEST/output/sdcard/boot/$BOARD.bin
 		if [[ $BOARD == "bananapi" ]] ; then
-				fex2bin $SRC/lib/config/bananapipro.fex $DEST/output/sdcard/boot/bananapipro.bin
-				fex2bin $SRC/lib/config/bananapir1.fex $DEST/output/sdcard/boot/bananapir1.bin
+				fex2bin $SRC/config/bananapipro.fex $DEST/output/sdcard/boot/bananapipro.bin
+				fex2bin $SRC/config/bananapir1.fex $DEST/output/sdcard/boot/bananapir1.bin
 		fi # bananapi
-		cp $SRC/lib/config/boot.cmd $DEST/output/sdcard/boot/boot.cmd
+		cp $SRC/config/boot.cmd $DEST/output/sdcard/boot/boot.cmd
 		sed -e "s/zImage/vmlinuz-$CHOOSEN_KERNEL/g" -i $DEST/output/sdcard/boot/boot.cmd
 		sed -e "s/script.bin/$BOARD.bin/g" -i $DEST/output/sdcard/boot/boot.cmd
 		# compile boot script
@@ -233,5 +233,5 @@ if [[ $BRANCH == *next* || $BOARD == cubox-i* ]];then
 fi
 
 # add linux firmwares to output image
-unzip $SRC/lib/bin/linux-firmware.zip -d $DEST/output/sdcard/lib/firmware
+unzip $SRC/bin/linux-firmware.zip -d $DEST/output/sdcard/lib/firmware
 }
